@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import streamlit as st
 
 # Streamlit Title
-st.title("Linear Regression Analysis on Price Data")
+st.title("Linear test Regression Analysis on Price Data")
 
 # Read the predefined CSV file (replace 'data.csv' with your filename)
 data = pd.read_csv('data.csv', delimiter=';')
