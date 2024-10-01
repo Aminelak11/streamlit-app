@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import streamlit as st
 
 # Streamlit Title
-st.title("Market trend using least square method")
+st.title("Market trend using least square method for XAUUSD market ")
 
 # Read the predefined CSV file (replace 'data.csv' with your filename)
 data = pd.read_csv('data.csv', delimiter=';')
