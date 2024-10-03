@@ -209,7 +209,7 @@ lookback_days = st.number_input(
     "Enter the number of days to include before the chosen date (for Trendline Analysis)",
     min_value=1,
     max_value=365,
-    value=60
+    value=61
 )
 
 if selected_date_in_data1 is None:
