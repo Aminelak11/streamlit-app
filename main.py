@@ -95,7 +95,7 @@ def fit_trendlines(high: pd.Series, low: pd.Series, close: pd.Series):
     return support_coefs, resist_coefs
 
 # Streamlit Title
-st.title("Market trend of the XAUUSD market using least square method")
+st.title("trading strategy optimization using technical analysis")
 
 # Read data.csv
 data = pd.read_csv('data.csv', delimiter=';')
@@ -137,7 +137,7 @@ selected_date_in_data = get_previous_available_date(selected_date, dates_in_data
 selected_date_in_data1 = get_previous_available_date(selected_date, dates_in_data1)
 
 # Analysis on data.csv
-st.header("Linear Regression Analysis (data.csv)")
+st.header("Market trend of the XAUUSD market using least square method")
 if selected_date_in_data is None:
     st.warning(f"No available date before or on {selected_date.date()} in data.csv")
 else:
