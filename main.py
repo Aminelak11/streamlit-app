@@ -95,7 +95,7 @@ def fit_trendlines(high: pd.Series, low: pd.Series, close: pd.Series):
     return support_coefs, resist_coefs
 
 # Streamlit Title
-st.title("trading strategy optimization using technical analysis")
+st.title("Trading Strategy Optimization Using Technical Analysis")
 
 # Read data.csv
 data = pd.read_csv('data.csv', delimiter=';')
