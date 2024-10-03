@@ -95,7 +95,7 @@ def fit_trendlines(high: pd.Series, low: pd.Series, close: pd.Series):
     return support_coefs, resist_coefs
 
 # Streamlit Title
-st.title("Market Trend Analysis")
+st.title("Market trend of the XAUUSD market using least square method")
 
 # Read data.csv
 data = pd.read_csv('data.csv', delimiter=';')
@@ -196,15 +196,15 @@ else:
 
             # Display the trend message
             if m > 1:
-                st.success(f"The trend is up from {start_date.date()} to {end_date.date()}.")
+                st.success(f"The market is up trending ( Bullish ) from {start_date.date()} to {end_date.date()} priorities Buying at this moment.")
             elif m < -1:
-                st.error(f"The trend is down from {start_date.date()} to {end_date.date()}.")
+                st.error(f"The market is down trending from {start_date.date()} to {end_date.date()} priorities Selling at this moment.")
             else:
-                st.info(f"The market is ranging from {start_date.date()} to {end_date.date()}.")
+                st.info(f"The market is ranging from {start_date.date()} to {end_date.date()} it is better to wait at this moment until the market will be trending either up or down.")
 
 
 # Trendline Analysis (data1.csv)
-st.header("Trendline Analysis (data1.csv)")
+st.header("Trendline analysis ")
 lookback_days = st.number_input(
     "Enter the number of days to include before the chosen date (for Trendline Analysis)",
     min_value=1,
