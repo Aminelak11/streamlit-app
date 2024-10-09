@@ -5,6 +5,14 @@ import mplfinance as mpf
 import streamlit as st
 import random
 
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import mplfinance as mpf
+import streamlit as st
+import random
+
+
 # Function to get the previous available date
 def get_previous_available_date(date, date_list):
     date_list = pd.to_datetime(date_list, errors='coerce')
@@ -16,6 +24,7 @@ def get_previous_available_date(date, date_list):
         return date_list_sorted.iloc[idx]
     else:
         return None
+
 
 # Function to check the trend line
 def check_trend_line(support: bool, pivot: int, slope: float, y: pd.Series):
@@ -30,6 +39,7 @@ def check_trend_line(support: bool, pivot: int, slope: float, y: pd.Series):
 
     err = (diffs ** 2.0).sum()
     return err
+
 
 # Function to optimize the slope
 def optimize_slope(support: bool, pivot: int, init_slope: float, y: pd.Series):
@@ -82,6 +92,7 @@ def optimize_slope(support: bool, pivot: int, init_slope: float, y: pd.Series):
 
     return (best_slope, -best_slope * pivot + y.iloc[pivot])
 
+
 # Function to fit trendlines (Support and Resistance)
 def fit_trendlines(high: pd.Series, low: pd.Series, close: pd.Series):
     slope, intercept = np.polyfit(np.arange(len(close)), close, 1)
@@ -95,6 +106,7 @@ def fit_trendlines(high: pd.Series, low: pd.Series, close: pd.Series):
     support_coefs = optimize_slope(True, lower_pivot_pos, slope, low)
     resist_coefs = optimize_slope(False, upper_pivot_pos, slope, high)
     return support_coefs, resist_coefs
+
 
 # Streamlit Title
 st.title("Trading Strategy Optimization Using Technical Analysis")
@@ -111,19 +123,26 @@ data1[['high', 'low', 'close']] = data1[['high', 'low', 'close']].astype(float)
 min_date = data1['date'].min()
 max_date = data1['date'].max()
 
+# Initialize session state for storing the random date
+if 'random_date' not in st.session_state:
+    st.session_state.random_date = None
+
 # User Input for Date
 selected_date = st.date_input(
     "Select a date",
-    value=max_date.date(),
+    value=st.session_state.random_date.date() if st.session_state.random_date else max_date.date(),
     min_value=min_date.date(),
     max_value=max_date.date()
 )
 
 # Add a button to select a random date
 if st.button("Select Random Date"):
-    random_date = pd.to_datetime(np.random.choice(pd.date_range(min_date, max_date).date))
-    selected_date = random_date
+    st.session_state.random_date = pd.to_datetime(np.random.choice(pd.date_range(min_date, max_date).date))
+    selected_date = st.session_state.random_date
     st.write(f"Random date selected: {selected_date.date()}")
+else:
+    if st.session_state.random_date:
+        selected_date = st.session_state.random_date
 
 selected_date = pd.to_datetime(selected_date)
 
@@ -153,7 +172,8 @@ else:
         filtered_data1['day_number'] = (filtered_data1['date'] - filtered_data1['date'].min()).dt.days
 
         # Select the price option
-        price_option = st.selectbox("Select Price Type for Analysis", ["Closing Price", "Average Price (High + Low) / 2"])
+        price_option = st.selectbox("Select Price Type for Analysis",
+                                    ["Closing Price", "Average Price (High + Low) / 2"])
         if price_option == "Closing Price":
             y = filtered_data1['close'].values
         else:
@@ -197,11 +217,11 @@ else:
 
             # Display the trend message
             if m > 1:
-                st.success(f"The market is up trending (Bullish) from {start_date.date()} to {end_date.date()}. Prioritize buying at this moment.")
+                st.success(
+                    f"The market is up trending (Bullish) from {start_date.date()} to {end_date.date()}. Prioritize buying at this moment.")
             elif m < -1:
-                st.error(f"The market is down trending from {start_date.date()} to {end_date.date()}. Prioritize selling at this moment.")
-            else:
-                st.info(f"The market is ranging from {start_date.date()} to {end_date.date()}. It is better to wait until a clear trend forms.")
+                st.error(
+                    f"The market is down trending from {start_date.date()} to {end_date.date()}. Prioritize selling at this moment.")
 
 # Trendline Analysis (data1.csv) with Linear Regression
 st.header("Trendline Analysis with Linear Regression Line")
