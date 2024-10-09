@@ -17,7 +17,7 @@ def get_previous_available_date(date, date_list):
     else:
         return None
 
-# Functions for trendline analysis (same as before)
+# Function to check the trend line
 def check_trend_line(support: bool, pivot: int, slope: float, y: pd.Series):
     intercept = -slope * pivot + y.iloc[pivot]
     line_vals = slope * np.arange(len(y)) + intercept
@@ -31,6 +31,7 @@ def check_trend_line(support: bool, pivot: int, slope: float, y: pd.Series):
     err = (diffs ** 2.0).sum()
     return err
 
+# Function to optimize the slope
 def optimize_slope(support: bool, pivot: int, init_slope: float, y: pd.Series):
     slope_unit = (y.max() - y.min()) / len(y)
     opt_step = 1.0
@@ -81,6 +82,7 @@ def optimize_slope(support: bool, pivot: int, init_slope: float, y: pd.Series):
 
     return (best_slope, -best_slope * pivot + y.iloc[pivot])
 
+# Function to fit trendlines (Support and Resistance)
 def fit_trendlines(high: pd.Series, low: pd.Series, close: pd.Series):
     slope, intercept = np.polyfit(np.arange(len(close)), close, 1)
 
@@ -97,21 +99,17 @@ def fit_trendlines(high: pd.Series, low: pd.Series, close: pd.Series):
 # Streamlit Title
 st.title("Trading Strategy Optimization Using Technical Analysis")
 
-# Read data.csv
-data = pd.read_csv('data.csv', delimiter=';')
-data.columns = ['date', 'price']
-data['price'] = data['price'].str.replace(',', '.').astype(float)
-data['date'] = pd.to_datetime(data['date'], format='%d/%m/%Y', errors='coerce')
-data = data.dropna(subset=['date'])  # Remove rows with invalid dates
-
-# Read data1.csv
+# Read data1.csv (Use for both graphs)
 data1 = pd.read_csv('data1.csv')
 data1['date'] = pd.to_datetime(data1['date'], errors='coerce')
 data1 = data1.dropna(subset=['date'])  # Remove rows with invalid dates
 
-# Get min and max dates from both datasets
-min_date = min(data['date'].min(), data1['date'].min())
-max_date = max(data['date'].max(), data1['date'].max())
+# Ensure numerical data types for high, low, close columns
+data1[['high', 'low', 'close']] = data1[['high', 'low', 'close']].astype(float)
+
+# Get min and max dates from data1.csv
+min_date = data1['date'].min()
+max_date = data1['date'].max()
 
 # User Input for Date
 selected_date = st.date_input(
@@ -129,36 +127,39 @@ if st.button("Select Random Date"):
 
 selected_date = pd.to_datetime(selected_date)
 
-# Function to get the previous available date in datasets
-dates_in_data = data['date']
+# Function to get the previous available date in data1.csv
 dates_in_data1 = data1['date']
-
-selected_date_in_data = get_previous_available_date(selected_date, dates_in_data)
 selected_date_in_data1 = get_previous_available_date(selected_date, dates_in_data1)
 
-# Analysis on data.csv
+# Analysis on data1.csv
 st.header("Market trend of the XAUUSD market using least square method")
-if selected_date_in_data is None:
-    st.warning(f"No available date before or on {selected_date.date()} in data.csv")
+if selected_date_in_data1 is None:
+    st.warning(f"No available date before or on {selected_date.date()} in data1.csv")
 else:
-    selected_date_data = selected_date_in_data
+    selected_date_data1 = selected_date_in_data1
     # Always use a fixed lookback period of 31 days
     lookback_days_first_graph = 31
-    start_date = selected_date_data - pd.Timedelta(days=lookback_days_first_graph-1)
-    end_date = selected_date_data
+    start_date = selected_date_data1 - pd.Timedelta(days=lookback_days_first_graph - 1)
+    end_date = selected_date_data1
 
     # Filter data between start_date and end_date
-    filtered_data = data[(data['date'] >= start_date) & (data['date'] <= end_date)]
+    filtered_data1 = data1[(data1['date'] >= start_date) & (data1['date'] <= end_date)]
 
-    if filtered_data.empty:
-        st.warning(f"No data available from {start_date.date()} to {end_date.date()} in data.csv.")
+    if filtered_data1.empty:
+        st.warning(f"No data available from {start_date.date()} to {end_date.date()} in data1.csv.")
     else:
         # Prepare data for regression
-        filtered_data = filtered_data.sort_values('date')
-        filtered_data['day_number'] = (filtered_data['date'] - filtered_data['date'].min()).dt.days
+        filtered_data1 = filtered_data1.sort_values('date')
+        filtered_data1['day_number'] = (filtered_data1['date'] - filtered_data1['date'].min()).dt.days
 
-        x = filtered_data['day_number'].values
-        y = filtered_data['price'].values
+        # Select the price option
+        price_option = st.selectbox("Select Price Type for Analysis", ["Closing Price", "Average Price (High + Low) / 2"])
+        if price_option == "Closing Price":
+            y = filtered_data1['close'].values
+        else:
+            y = ((filtered_data1['high'] + filtered_data1['low']) / 2).values
+
+        x = filtered_data1['day_number'].values
 
         # Calculate sums for linear regression
         n = len(x)
@@ -183,11 +184,11 @@ else:
 
             # Plot the results using Matplotlib
             fig, ax = plt.subplots(figsize=(10, 6))
-            ax.scatter(filtered_data['date'], y, color='blue', label='Original Data')
-            ax.plot(filtered_data['date'], predicted_prices, color='red', label=f'Linear fit: y = {m:.2f}x + {b:.2f}')
+            ax.scatter(filtered_data1['date'], y, color='blue', label='Original Data')
+            ax.plot(filtered_data1['date'], predicted_prices, color='red', label=f'Linear fit: y = {m:.2f}x + {b:.2f}')
             ax.set_xlabel('Date')
             ax.set_ylabel('Price')
-            ax.set_title(f'Linear Regression on Prices from {start_date.date()} to {end_date.date()}')
+            ax.set_title(f'Linear Regression on {price_option} from {start_date.date()} to {end_date.date()}')
             ax.legend()
             ax.grid(True)
 
@@ -196,15 +197,14 @@ else:
 
             # Display the trend message
             if m > 1:
-                st.success(f"The market is up trending ( Bullish ) from {start_date.date()} to {end_date.date()} priorities Buying at this moment.")
+                st.success(f"The market is up trending (Bullish) from {start_date.date()} to {end_date.date()}. Prioritize buying at this moment.")
             elif m < -1:
-                st.error(f"The market is down trending from {start_date.date()} to {end_date.date()} priorities Selling at this moment.")
+                st.error(f"The market is down trending from {start_date.date()} to {end_date.date()}. Prioritize selling at this moment.")
             else:
-                st.info(f"The market is ranging from {start_date.date()} to {end_date.date()} it is better to wait at this moment until the market will be trending either up or down.")
+                st.info(f"The market is ranging from {start_date.date()} to {end_date.date()}. It is better to wait until a clear trend forms.")
 
-
-# Trendline Analysis (data1.csv)
-st.header("Trendline analysis ")
+# Trendline Analysis (data1.csv) with Linear Regression
+st.header("Trendline Analysis with Linear Regression Line")
 lookback_days = st.number_input(
     "Enter the number of days to include before the chosen date (for Trendline Analysis)",
     min_value=1,
@@ -242,23 +242,30 @@ else:
         if len(candles) < 2:
             st.warning(f"Not enough data to compute trendlines from {start_date1.date()} to {end_date1.date()}.")
         else:
+            # Fit Support and Resistance trendlines
             support_coefs, resist_coefs = fit_trendlines(candles['high'], candles['low'], candles['close'])
             support_line = support_coefs[0] * np.arange(len(candles)) + support_coefs[1]
             resist_line = resist_coefs[0] * np.arange(len(candles)) + resist_coefs[1]
 
+            # Calculate Linear Regression Line
+            x_vals = np.arange(len(candles))
+            slope, intercept = np.polyfit(x_vals, candles['close'], 1)
+            regression_line = slope * x_vals + intercept
+
             # Prepare trendlines for plotting
             alines = [
                 [(candles.index[i], support_line[i]) for i in range(len(candles))],
-                [(candles.index[i], resist_line[i]) for i in range(len(candles))]
+                [(candles.index[i], resist_line[i]) for i in range(len(candles))],
+                [(candles.index[i], regression_line[i]) for i in range(len(candles))],  # Regression Line
             ]
 
-            # Plot the candlestick chart with trendlines
+            # Plot the candlestick chart with trendlines and linear regression line
             fig, axlist = mpf.plot(
                 candles,
                 type='candle',
-                alines=dict(alines=alines, colors=['green', 'red']),
+                alines=dict(alines=alines, colors=['green', 'red', 'blue']),  # Blue for Regression Line
                 style='charles',
-                title=f"Candlestick with Support and Resistance Trendlines from {start_date1.date()} to {end_date1.date()}",
+                title=f"Candlestick with Support, Resistance, and Regression Line from {start_date1.date()} to {end_date1.date()}",
                 figsize=(20, 12),  # Increase figure size for better visibility
                 returnfig=True
             )
