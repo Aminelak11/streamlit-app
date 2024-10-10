@@ -222,6 +222,8 @@ else:
             elif m < -1:
                 st.error(
                     f"The market is down trending from {start_date.date()} to {end_date.date()}. Prioritize selling at this moment.")
+            else: (
+                    f"The market is ranging from {start_date.date()} to {end_date.date()}. better to wait for a trend creation.")
 
 # Trendline Analysis (data1.csv) with Linear Regression
 st.header("Trendline Analysis with Linear Regression Line")
