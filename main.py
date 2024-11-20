@@ -290,7 +290,7 @@ else:
                 st.pyplot(fig)
 
 # Streamlit Title
-st.title("Candlestick Chart with Trend Analysis")
+st.title("Support and Resistance Levels")
 
 # Since we have already read data1.csv and initialized session state, we don't need to do it again.
 
@@ -314,8 +314,7 @@ selected_date_candlestick = st.date_input(
 # Function to get the previous available date in data1.csv
 selected_date_in_data1_candlestick = get_previous_available_date(selected_date_candlestick, dates_in_data1)
 
-# Analysis on data1.csv
-st.header("Support and Resistance Lines")
+
 
 if selected_date_in_data1_candlestick is None:
     st.warning(f"No available date before or on {selected_date_candlestick.date()} in data1.csv")
