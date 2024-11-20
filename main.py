@@ -325,7 +325,7 @@ else:
         "Enter the number of days to include before the chosen date (for Candlestick Chart)",
         min_value=1,
         max_value=365,
-        value=61,
+        value=31,
         key="lookback_days_candlestick"
     )
     start_date = selected_date_data1 - pd.Timedelta(days=lookback_days_candlestick - 1)
