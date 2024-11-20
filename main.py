@@ -97,7 +97,7 @@ def fit_trendlines(high: pd.Series, low: pd.Series, close: pd.Series):
     return support_coefs, resist_coefs
 
 # Streamlit Title
-st.title("Trading Strategy Optimization Using Technical Analysis")
+st.title("Trading Strategy Optimization Using Technical Analysis for the GOLD Market")
 
 # Read data1.csv
 data1 = pd.read_csv('data1.csv')
@@ -140,7 +140,7 @@ dates_in_data1 = data1['date']
 selected_date_in_data1 = get_previous_available_date(selected_date, dates_in_data1)
 
 # Analysis on data1.csv
-st.header("Market trend of the XAUUSD market using least square method")
+st.header("Market trend ")
 if selected_date_in_data1 is None:
     st.warning(f"No available date before or on {selected_date.date()} in data1.csv")
 else:
@@ -217,7 +217,7 @@ else:
                     f"The market is ranging from {start_date.date()} to {end_date.date()}. Better to wait for a trend creation.")
 
 # Trendline Analysis (data1.csv) with Linear Regression
-st.header("Trendline Analysis with Linear Regression Line")
+st.header("Trendline identification")
 lookback_days = st.number_input(
     "Enter the number of days to include before the chosen date (for Trendline Analysis)",
     min_value=1,
@@ -315,7 +315,7 @@ selected_date_candlestick = st.date_input(
 selected_date_in_data1_candlestick = get_previous_available_date(selected_date_candlestick, dates_in_data1)
 
 # Analysis on data1.csv
-st.header("Candlestick Chart with Support and Resistance Lines")
+st.header("Support and Resistance Lines")
 
 if selected_date_in_data1_candlestick is None:
     st.warning(f"No available date before or on {selected_date_candlestick.date()} in data1.csv")
