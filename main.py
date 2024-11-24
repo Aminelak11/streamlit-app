@@ -517,7 +517,7 @@ else:
             st.pyplot(fig)
 
 # Combined Trendlines and Key Levels with Custom Lookback Period
-st.header("Combined Trendlines and Key Levels with Custom Lookback Period")
+st.header("Combined Chart: Trendlines and Key Levels")
 
 # User input for the number of days to include before the chosen date
 lookback_days_combined = st.number_input(
@@ -571,20 +571,30 @@ else:
             support_line_combined = support_coefs_combined[0] * np.arange(len(candles_combined)) + support_coefs_combined[1]
             resist_line_combined = resist_coefs_combined[0] * np.arange(len(candles_combined)) + resist_coefs_combined[1]
 
+            # Identify key levels (horizontal support/resistance lines)
+            buffer_threshold = (filtered_data_combined['high'].max() - filtered_data_combined['low'].min()) * 0.02  # Example buffer
+            horizontal_lines = []  # Store horizontal levels
+            for index, row in candles_combined.iterrows():
+                key_level = (row['high'] + row['low']) / 2
+                if all(abs(key_level - level) > buffer_threshold for level in horizontal_lines):
+                    horizontal_lines.append(key_level)
+
             # Prepare lines for mplfinance plotting
             alines_combined = [
                 [(candles_combined.index[i], support_line_combined[i]) for i in range(len(candles_combined))],
                 [(candles_combined.index[i], resist_line_combined[i]) for i in range(len(candles_combined))],
                 [(candles_combined.index[i], regression_line_combined[i]) for i in range(len(candles_combined))],
             ]
+            hlines_combined = horizontal_lines
 
-            # Plot the candlestick chart with trendlines, support/resistance levels, and regression line
+            # Plot the candlestick chart with trendlines, key levels, and regression line
             fig_combined, axlist_combined = mpf.plot(
                 candles_combined,
                 type='candle',
                 alines=dict(alines=alines_combined, colors=['green', 'red', 'blue']),
+                hlines=dict(hlines=hlines_combined, colors='orange'),
                 style='charles',
-                title=f"Combined Trendlines and Key Levels from {start_date_combined.date()} to {end_date_combined.date()}",
+                title=f"Combined Chart: Trendlines and Key Levels from {start_date_combined.date()} to {end_date_combined.date()}",
                 figsize=(20, 12),
                 returnfig=True
             )
