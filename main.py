@@ -515,3 +515,73 @@ else:
 
             # Display the plot in Streamlit
             st.pyplot(fig)
+
+# Combined Trendlines and Key Levels Visualization
+st.header("Combined Trendlines and Key Levels")
+
+if selected_date_in_data1 is None:
+    st.warning(f"No available date before or on {selected_date.date()} in data1.csv")
+else:
+    selected_date_data1 = selected_date_in_data1
+    start_date_combined = selected_date_data1 - pd.Timedelta(days=lookback_days - 1)
+    end_date_combined = selected_date_data1
+
+    # Filter data between start_date and end_date
+    filtered_data_combined = data1[(data1['date'] >= start_date_combined) & (data1['date'] <= end_date_combined)]
+
+    if filtered_data_combined.empty:
+        st.warning(f"No data available from {start_date_combined.date()} to {end_date_combined.date()} in data1.csv.")
+    else:
+        # Sort the filtered data by date
+        filtered_data_combined = filtered_data_combined.sort_values('date')
+
+        # Prepare data for regression
+        filtered_data_combined['day_number'] = (filtered_data_combined['date'] - filtered_data_combined['date'].min()).dt.days
+        x_combined = filtered_data_combined['day_number'].values
+        y_combined = ((filtered_data_combined['high'] + filtered_data_combined['low']) / 2).values
+
+        # Perform linear regression
+        n = len(x_combined)
+        sum_x = np.sum(x_combined)
+        sum_y = np.sum(y_combined)
+        sum_xy = np.sum(x_combined * y_combined)
+        sum_x_squared = np.sum(x_combined ** 2)
+        denominator = n * sum_x_squared - sum_x ** 2
+
+        if denominator == 0:
+            st.error("Cannot compute linear regression due to zero denominator.")
+        else:
+            # Calculate slope (m) and intercept (b)
+            m_combined = (n * sum_xy - sum_x * sum_y) / denominator
+            b_combined = (sum_y * sum_x_squared - sum_x * sum_xy) / denominator
+            regression_line_combined = m_combined * x_combined + b_combined
+
+            # Fit Support and Resistance trendlines
+            candles_combined = filtered_data_combined[['date', 'open', 'high', 'low', 'close']].set_index('date')
+            support_coefs_combined, resist_coefs_combined = fit_trendlines(candles_combined['high'], candles_combined['low'], candles_combined['close'])
+            support_line_combined = support_coefs_combined[0] * np.arange(len(candles_combined)) + support_coefs_combined[1]
+            resist_line_combined = resist_coefs_combined[0] * np.arange(len(candles_combined)) + resist_coefs_combined[1]
+
+            # Prepare lines for mplfinance plotting
+            alines_combined = [
+                [(candles_combined.index[i], support_line_combined[i]) for i in range(len(candles_combined))],
+                [(candles_combined.index[i], resist_line_combined[i]) for i in range(len(candles_combined))],
+                [(candles_combined.index[i], regression_line_combined[i]) for i in range(len(candles_combined))],
+            ]
+
+            # Plot the candlestick chart with trendlines, support/resistance levels, and regression line
+            fig_combined, axlist_combined = mpf.plot(
+                candles_combined,
+                type='candle',
+                alines=dict(alines=alines_combined, colors=['green', 'red', 'blue']),
+                style='charles',
+                title=f"Combined Trendlines and Key Levels from {start_date_combined.date()} to {end_date_combined.date()}",
+                figsize=(20, 12),
+                returnfig=True
+            )
+
+            # Use Streamlit's columns to center the graph
+            col1, col2, col3 = st.columns([0.5, 4, 0.5])  # Center the graph in the middle column
+            with col2:
+                st.pyplot(fig_combined)
+
