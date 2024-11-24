@@ -516,14 +516,23 @@ else:
             # Display the plot in Streamlit
             st.pyplot(fig)
 
-# Combined Trendlines and Key Levels Visualization
-st.header("Combined Trendlines and Key Levels")
+# Combined Trendlines and Key Levels with Custom Lookback Period
+st.header("Combined Trendlines and Key Levels with Custom Lookback Period")
+
+# User input for the number of days to include before the chosen date
+lookback_days_combined = st.number_input(
+    "Enter the number of days to include before the chosen date (for Combined Chart):",
+    min_value=1,
+    max_value=365,
+    value=61,
+    key="lookback_days_combined"
+)
 
 if selected_date_in_data1 is None:
     st.warning(f"No available date before or on {selected_date.date()} in data1.csv")
 else:
     selected_date_data1 = selected_date_in_data1
-    start_date_combined = selected_date_data1 - pd.Timedelta(days=lookback_days - 1)
+    start_date_combined = selected_date_data1 - pd.Timedelta(days=lookback_days_combined - 1)
     end_date_combined = selected_date_data1
 
     # Filter data between start_date and end_date
