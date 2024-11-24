@@ -261,7 +261,7 @@ else:
             support_line = support_coefs[0] * np.arange(len(candles)) + support_coefs[1]
             resist_line = resist_coefs[0] * np.arange(len(candles)) + resist_coefs[1]
 
-            # Calculate Linear Regression Line
+            # Calculate the median Line
             x_vals = np.arange(len(candles))
             slope, intercept = np.polyfit(x_vals, candles['close'], 1)
             regression_line = slope * x_vals + intercept
