@@ -515,3 +515,4 @@ else:
 
             # Display the plot in Streamlit
             st.pyplot(fig)
+
