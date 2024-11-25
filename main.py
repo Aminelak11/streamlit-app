@@ -140,7 +140,7 @@ dates_in_data1 = data1['date']
 selected_date_in_data1 = get_previous_available_date(selected_date, dates_in_data1)
 
 # Analysis on data1.csv
-st.header("Market trend ")
+st.header("Market trend Identification")
 if selected_date_in_data1 is None:
     st.warning(f"No available date before or on {selected_date.date()} in data1.csv")
 else:
