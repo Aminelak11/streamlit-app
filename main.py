@@ -5,6 +5,22 @@ import mplfinance as mpf
 import streamlit as st
 import random
 
+# Function to compute linear regression manually
+def compute_linear_regression(x, y):
+    n = len(x)
+    sum_x = np.sum(x)
+    sum_y = np.sum(y)
+    sum_xy = np.sum(x * y)
+    sum_x_squared = np.sum(x ** 2)
+    denominator = n * sum_x_squared - sum_x ** 2
+
+    if denominator == 0:
+        return None, None
+    else:
+        slope = (n * sum_xy - sum_x * sum_y) / denominator
+        intercept = (sum_y * sum_x_squared - sum_x * sum_xy) / denominator
+        return slope, intercept
+
 # Function to get the previous available date
 def get_previous_available_date(date, date_list):
     date_list = pd.to_datetime(date_list, errors='coerce')
@@ -84,7 +100,14 @@ def optimize_slope(support: bool, pivot: int, init_slope: float, y: pd.Series):
 
 # Function to fit trendlines (Support and Resistance)
 def fit_trendlines(high: pd.Series, low: pd.Series, close: pd.Series):
-    slope, intercept = np.polyfit(np.arange(len(close)), close, 1)
+    x = np.arange(len(close))
+    y = close.values
+    slope, intercept = compute_linear_regression(x, y)
+
+    if slope is None or intercept is None:
+        # Handle zero denominator case
+        slope = 0
+        intercept = y.mean()
 
     upper_pivot = high.idxmax()
     lower_pivot = low.idxmin()
@@ -99,6 +122,7 @@ def fit_trendlines(high: pd.Series, low: pd.Series, close: pd.Series):
 # Streamlit Title
 st.title("Trading Strategy Optimization Using Technical Analysis for the GOLD Market")
 st.write("This tool provides a comprehensive analysis of the GOLD market using linear regression, trendlines, and candlestick pattern analysis. It identifies market trends, support/resistance levels, and potential trading opportunities.")
+
 # Read data1.csv
 data1 = pd.read_csv('data1.csv')
 data1['date'] = pd.to_datetime(data1['date'], errors='coerce')
@@ -140,7 +164,7 @@ dates_in_data1 = data1['date']
 selected_date_in_data1 = get_previous_available_date(selected_date, dates_in_data1)
 
 # Analysis on data1.csv
-st.header("Market trend Identification")
+st.header("Market Trend Identification")
 st.write("This tool provides a comprehensive analysis of the GOLD market using linear regression, trendlines, and candlestick pattern analysis. It identifies market trends, support/resistance levels, and potential trading opportunities.")
 if selected_date_in_data1 is None:
     st.warning(f"No available date before or on {selected_date.date()} in data1.csv")
@@ -183,20 +207,20 @@ else:
         if denominator == 0:
             st.error("Cannot compute linear regression due to zero denominator.")
         else:
-            # Calculate slope (m) and intercept (b)
-            m = (n * sum_xy - sum_x * sum_y) / denominator
-            b = (sum_y * sum_x_squared - sum_x * sum_xy) / denominator
+            # Calculate slope and intercept
+            slope = (n * sum_xy - sum_x * sum_y) / denominator
+            intercept = (sum_y * sum_x_squared - sum_x * sum_xy) / denominator
 
             # Display the equation of the line
-            st.write(f"The equation of the line is: y = {m:.2f}x + {b:.2f}")
+            st.write(f"The equation of the line is: y = {slope:.2f}x + {intercept:.2f}")
 
             # Generate predictions
-            predicted_prices = m * x + b
+            predicted_prices = slope * x + intercept
 
             # Plot the results using Matplotlib
             fig, ax = plt.subplots(figsize=(10, 6))
             ax.scatter(filtered_data1['date'], y, color='blue', label='Original Data')
-            ax.plot(filtered_data1['date'], predicted_prices, color='red', label=f'Linear fit: y = {m:.2f}x + {b:.2f}')
+            ax.plot(filtered_data1['date'], predicted_prices, color='red', label=f'Linear fit: y = {slope:.2f}x + {intercept:.2f}')
             ax.set_xlabel('Date')
             ax.set_ylabel('Price')
             ax.set_title(f'Linear Regression on {price_option} from {start_date.date()} to {end_date.date()}')
@@ -207,10 +231,10 @@ else:
             st.pyplot(fig)
 
             # Display the trend message
-            if m > 1:
+            if slope > 1:
                 st.success(
                     f"The market is up trending (Bullish) from {start_date.date()} to {end_date.date()}. Prioritize buying at this moment.")
-            elif m < -1:
+            elif slope < -1:
                 st.error(
                     f"The market is down trending from {start_date.date()} to {end_date.date()}. Prioritize selling at this moment.")
             else:
@@ -218,7 +242,7 @@ else:
                     f"The market is ranging from {start_date.date()} to {end_date.date()}. Better to wait for a trend creation.")
 
 # Trendline Analysis (data1.csv) with Linear Regression
-st.header("Trendline identification")
+st.header("Trendline Identification")
 st.write("This tool provides a comprehensive analysis of the GOLD market using linear regression, trendlines, and candlestick pattern analysis. It identifies market trends, support/resistance levels, and potential trading opportunities.")
 
 lookback_days = st.number_input(
@@ -264,13 +288,20 @@ else:
             support_slope, support_intercept = support_coefs
             resist_slope, resist_intercept = resist_coefs
 
-            # Calculate the regression line
+            # Calculate the regression line manually
             x_vals = np.arange(len(candles))
-            slope, intercept = np.polyfit(x_vals, candles['close'], 1)
-            regression_line = slope * x_vals + intercept
+            y_vals = candles['close'].values
+
+            slope, intercept = compute_linear_regression(x_vals, y_vals)
+            if slope is None or intercept is None:
+                st.error("Cannot compute linear regression due to zero denominator.")
+                regression_line = np.full_like(x_vals, y_vals.mean())  # Use mean as fallback
+            else:
+                regression_line = slope * x_vals + intercept
 
             # Display the calculated trendline equations
             st.write("### Calculated Trendline Equations:")
+            st.latex(fr"y_\text{{regression}} = {slope:.2f}x + {intercept:.2f}")
             st.latex(fr"y_\text{{support}} = {support_slope:.2f}x + {support_intercept:.2f}")
             st.latex(fr"y_\text{{resistance}} = {resist_slope:.2f}x + {resist_intercept:.2f}")
 
@@ -301,8 +332,7 @@ else:
                 st.pyplot(fig)
 # Streamlit Title
 st.title("Support and Resistance Levels")
-st.write("This tool provides a comprehensive analysis of the GOLD market using linear regression, trendlines, and candlestick pattern analysis. It identifies market trends, support/resistance levels, and potential trading opportunities.")
-# Since we have already read data1.csv and initialized session state, we don't need to do it again.
+st.write("This tool calculates and plots support and resistance zones using standard deviation to help guide price movements more clearly.")
 
 # User input for minimum distance between two support lines
 min_distance_between_supports = st.number_input(
@@ -310,6 +340,14 @@ min_distance_between_supports = st.number_input(
     min_value=0.01,  # minimum value is 0.01 to avoid too small numbers
     value=0.02,  # default value is 2%
     key="min_distance_supports"
+)
+
+# Input for standard deviation multiplier
+multiplier = st.number_input(
+    'Enter the multiplier for standard deviation (e.g., 1 or 2):',
+    min_value=0.1,
+    value=1.0,
+    key='std_multiplier'
 )
 
 # Reuse selected_date or get a new date_input with a unique key
@@ -323,8 +361,6 @@ selected_date_candlestick = st.date_input(
 
 # Function to get the previous available date in data1.csv
 selected_date_in_data1_candlestick = get_previous_available_date(selected_date_candlestick, dates_in_data1)
-
-
 
 if selected_date_in_data1_candlestick is None:
     st.warning(f"No available date before or on {selected_date_candlestick.date()} in data1.csv")
@@ -357,7 +393,7 @@ else:
         x = filtered_data1['day_number'].values
         y = filtered_data1['body_avg'].values
 
-        # Perform linear regression
+        # Perform linear regression manually
         n = len(x)
         sum_x = np.sum(x)
         sum_y = np.sum(y)
@@ -367,211 +403,246 @@ else:
 
         if denominator == 0:
             st.error("Cannot compute linear regression due to zero denominator.")
+            slope = 0
+            intercept = y.mean()
         else:
-            # Calculate slope (m) and intercept (b)
-            m = (n * sum_xy - sum_x * sum_y) / denominator
-            b = (sum_y * sum_x_squared - sum_x * sum_xy) / denominator
+            # Calculate slope and intercept
+            slope = (n * sum_xy - sum_x * sum_y) / denominator
+            intercept = (sum_y * sum_x_squared - sum_x * sum_xy) / denominator
 
-            # Generate predictions
-            predicted_prices = m * x + b
+        # Plot the candlestick chart
+        candles = filtered_data1[['date', 'open', 'high', 'low', 'close']].set_index('date')
 
-            # Prepare the linear regression line for plotting (we won't plot it)
-            # regression_line = pd.Series(predicted_prices, index=filtered_data1['date'])
+        # Define buffer threshold (for example, 2% of the price range)
+        buffer_threshold = (filtered_data1['high'].max() - filtered_data1['low'].min()) * min_distance_between_supports
 
-            # Plot the candlestick chart
-            candles = filtered_data1[['date', 'open', 'high', 'low', 'close']].set_index('date')
+        # Function to check if the line is too close to another line
+        def is_line_too_close(new_line_price, existing_lines, buffer):
+            return any(abs(new_line_price - line[0]) < buffer for line in existing_lines)
 
-            # Define buffer threshold (for example, 2% of the price range)
-            buffer_threshold = (filtered_data1['high'].max() - filtered_data1['low'].min()) * min_distance_between_supports
+        # Prepare list to store lines for mplfinance and track horizontal lines
+        lines = []
+        horizontal_lines = []  # Keep track of the horizontal lines
 
-            # Function to check if the line is too close to another line
-            def is_line_too_close(new_line_price, existing_lines, buffer):
-                return any(abs(new_line_price - line) < buffer for line in existing_lines)
+        # If there is an uptrend, proceed to identify the special green line case
+        if slope > 1:
+            st.success(f"The market is up trending (Bullish) from {start_date.date()} to {end_date.date()}.")
 
-            # Prepare list to store lines for mplfinance and track horizontal lines
-            lines = []
-            horizontal_lines = []  # Keep track of the horizontal lines
+            # Variables to track state
+            red_candle_found = False
+            red_candle_high = None
+            red_candle_low = None
+            last_red_candle_low = None
+            last_red_candle_index = None
 
-            # If there is an uptrend, proceed to identify the special green line case
-            if m > 1:
-                st.success(f"The market is up trending (Bullish) from {start_date.date()} to {end_date.date()}.")
+            # Iterate over the filtered data to find patterns
+            for i in range(2, len(filtered_data1)):
+                current_candle = filtered_data1.iloc[i]
+                previous_candle_1 = filtered_data1.iloc[i - 1]
+                previous_candle_2 = filtered_data1.iloc[i - 2]
 
-                # Variables to track state
-                red_candle_found = False
-                red_candle_high = None
-                red_candle_low = None
-                last_red_candle_low = None
-                last_red_candle_index = None
-
-                # Iterate over the filtered data to find patterns
-                for i in range(2, len(filtered_data1)):
-                    current_candle = filtered_data1.iloc[i]
-                    previous_candle_1 = filtered_data1.iloc[i - 1]
-                    previous_candle_2 = filtered_data1.iloc[i - 2]
-
-                    # Check for at least two consecutive green candles
-                    if (previous_candle_1['close'] > previous_candle_1['open'] and
-                        previous_candle_2['close'] > previous_candle_2['open']):
-                        # Find a valid red candle after the green sequence
-                        if current_candle['close'] < current_candle['open']:
-                            red_candle_found = True
-                            red_candle_high = current_candle['open']
-                            red_candle_low = current_candle['close']
-                            last_red_candle_low = red_candle_low  # Store the low of this red candle
-                            last_red_candle_index = i  # Store the index of the red candle
-                            continue  # Move to the next candle to look for the green one
-
-                    # If another red candle is found after the first, update the red candle tracking
-                    if red_candle_found and current_candle['close'] < current_candle['open']:
+                # Check for at least two consecutive green candles
+                if (previous_candle_1['close'] > previous_candle_1['open'] and
+                    previous_candle_2['close'] > previous_candle_2['open']):
+                    # Find a valid red candle after the green sequence
+                    if current_candle['close'] < current_candle['open']:
+                        red_candle_found = True
                         red_candle_high = current_candle['open']
                         red_candle_low = current_candle['close']
-                        last_red_candle_low = red_candle_low  # Update to the most recent red candle
-                        last_red_candle_index = i  # Update the index
+                        last_red_candle_low = red_candle_low  # Store the low of this red candle
+                        last_red_candle_index = i  # Store the index of the red candle
+                        continue  # Move to the next candle to look for the green one
 
-                    # Once a red candle is found, look for the next green candle that breaks its high
-                    if red_candle_found:
-                        if current_candle['close'] > current_candle['open'] and current_candle['close'] > red_candle_high:
-                            # Check if the support line is too close to another horizontal line
-                            if not is_line_too_close(last_red_candle_low, horizontal_lines, buffer_threshold):
-                                # Add the green horizontal line at the low of the most recent red candle's body
-                                lines.append(mpf.make_addplot([last_red_candle_low]*len(candles), color='green', linestyle='--'))
-                                horizontal_lines.append(last_red_candle_low)  # Store the support line
-                                st.write(f"Green line drawn at {last_red_candle_low} from the red candle on {filtered_data1.iloc[last_red_candle_index]['date'].date()}.")
-                            red_candle_found = False  # Reset the red candle tracking
+                # If another red candle is found after the first, update the red candle tracking
+                if red_candle_found and current_candle['close'] < current_candle['open']:
+                    red_candle_high = current_candle['open']
+                    red_candle_low = current_candle['close']
+                    last_red_candle_low = red_candle_low  # Update to the most recent red candle
+                    last_red_candle_index = i  # Update the index
 
-                # If no green candle breaks the red candle's high, draw the line on the low of the last red candle
-                if red_candle_found and last_red_candle_low:
-                    if not is_line_too_close(last_red_candle_low, horizontal_lines, buffer_threshold):
-                        lines.append(mpf.make_addplot([last_red_candle_low]*len(candles), color='green', linestyle='--'))
-                        horizontal_lines.append(last_red_candle_low)  # Store the support line
-                        st.write(f"Green line drawn at {last_red_candle_low} from the last red candle's low on {filtered_data1.iloc[last_red_candle_index]['date'].date()}.")
+                # Once a red candle is found, look for the next green candle that breaks its high
+                if red_candle_found:
+                    if current_candle['close'] > current_candle['open'] and current_candle['close'] > red_candle_high:
+                        # Check if the support line is too close to another horizontal line
+                        if not is_line_too_close(last_red_candle_low, horizontal_lines, buffer_threshold):
+                            # Add the green horizontal line at the low of the most recent red candle's body
+                            lines.append(mpf.make_addplot([last_red_candle_low]*len(candles), color='green', linestyle='--'))
+                            horizontal_lines.append( (last_red_candle_low, 'support') )  # Store the support line
+                            st.write(f"Green line drawn at {last_red_candle_low} from the red candle on {filtered_data1.iloc[last_red_candle_index]['date'].date()}.")
+                        red_candle_found = False  # Reset the red candle tracking
 
-            elif m < -1:
-                st.error(f"The market is down trending (Bearish) from {start_date.date()} to {end_date.date()}.")
+            # If no green candle breaks the red candle's high, draw the line on the low of the last red candle
+            if red_candle_found and last_red_candle_low:
+                if not is_line_too_close(last_red_candle_low, horizontal_lines, buffer_threshold):
+                    lines.append(mpf.make_addplot([last_red_candle_low]*len(candles), color='green', linestyle='--'))
+                    horizontal_lines.append( (last_red_candle_low, 'support') )  # Store the support line
+                    st.write(f"Green line drawn at {last_red_candle_low} from the last red candle's low on {filtered_data1.iloc[last_red_candle_index]['date'].date()}.")
 
-                # Variables to track state
-                green_candle_found = False
-                green_candle_high = None
-                green_candle_low = None
-                last_green_candle_high = None
-                last_green_candle_index = None
+        elif slope < -1:
+            st.error(f"The market is down trending (Bearish) from {start_date.date()} to {end_date.date()}.")
 
-                # Iterate over the filtered data to find patterns
-                for i in range(2, len(filtered_data1)):
-                    current_candle = filtered_data1.iloc[i]
-                    previous_candle_1 = filtered_data1.iloc[i - 1]
-                    previous_candle_2 = filtered_data1.iloc[i - 2]
+            # Variables to track state
+            green_candle_found = False
+            green_candle_high = None
+            green_candle_low = None
+            last_green_candle_high = None
+            last_green_candle_index = None
 
-                    # Check for at least two consecutive red candles
-                    if (previous_candle_1['close'] < previous_candle_1['open'] and
-                        previous_candle_2['close'] < previous_candle_2['open']):
-                        # Find a valid green candle after the red sequence
-                        if current_candle['close'] > current_candle['open']:
-                            green_candle_found = True
-                            green_candle_high = current_candle['close']
-                            green_candle_low = current_candle['open']
-                            last_green_candle_high = green_candle_high  # Store the high of this green candle
-                            last_green_candle_index = i  # Store the index of the green candle
-                            continue  # Move to the next candle to look for the red one
+            # Iterate over the filtered data to find patterns
+            for i in range(2, len(filtered_data1)):
+                current_candle = filtered_data1.iloc[i]
+                previous_candle_1 = filtered_data1.iloc[i - 1]
+                previous_candle_2 = filtered_data1.iloc[i - 2]
 
-                    # If another green candle is found after the first, update the green candle tracking
-                    if green_candle_found and current_candle['close'] > current_candle['open']:
+                # Check for at least two consecutive red candles
+                if (previous_candle_1['close'] < previous_candle_1['open'] and
+                    previous_candle_2['close'] < previous_candle_2['open']):
+                    # Find a valid green candle after the red sequence
+                    if current_candle['close'] > current_candle['open']:
+                        green_candle_found = True
                         green_candle_high = current_candle['close']
                         green_candle_low = current_candle['open']
-                        last_green_candle_high = green_candle_high  # Update to the most recent green candle
-                        last_green_candle_index = i  # Update the index
+                        last_green_candle_high = green_candle_high  # Store the high of this green candle
+                        last_green_candle_index = i  # Store the index of the green candle
+                        continue  # Move to the next candle to look for the red one
 
-                    # Once a green candle is found, look for the next red candle that breaks its low
-                    if green_candle_found:
-                        if current_candle['close'] < current_candle['open'] and current_candle['close'] < green_candle_low:
-                            # Check if the resistance line is too close to another horizontal line
-                            if not is_line_too_close(last_green_candle_high, horizontal_lines, buffer_threshold):
-                                # Add the red horizontal line at the high of the most recent green candle's body
-                                lines.append(mpf.make_addplot([last_green_candle_high]*len(candles), color='red', linestyle='--'))
-                                horizontal_lines.append(last_green_candle_high)  # Store the resistance line
-                                st.write(f"Red line drawn at {last_green_candle_high} from the green candle on {filtered_data1.iloc[last_green_candle_index]['date'].date()}.")
-                            green_candle_found = False  # Reset the green candle tracking
+                # If another green candle is found after the first, update the green candle tracking
+                if green_candle_found and current_candle['close'] > current_candle['open']:
+                    green_candle_high = current_candle['close']
+                    green_candle_low = current_candle['open']
+                    last_green_candle_high = green_candle_high  # Update to the most recent green candle
+                    last_green_candle_index = i  # Update the index
 
-                # If no red candle breaks the green candle's low, draw the line on the high of the last green candle
-                if green_candle_found and last_green_candle_high:
-                    if not is_line_too_close(last_green_candle_high, horizontal_lines, buffer_threshold):
-                        lines.append(mpf.make_addplot([last_green_candle_high]*len(candles), color='red', linestyle='--'))
-                        horizontal_lines.append(last_green_candle_high)  # Store the resistance line
-                        st.write(f"Red line drawn at {last_green_candle_high} from the last green candle's high on {filtered_data1.iloc[last_green_candle_index]['date'].date()}.")
+                # Once a green candle is found, look for the next red candle that breaks its low
+                if green_candle_found:
+                    if current_candle['close'] < current_candle['open'] and current_candle['close'] < green_candle_low:
+                        # Check if the resistance line is too close to another horizontal line
+                        if not is_line_too_close(last_green_candle_high, horizontal_lines, buffer_threshold):
+                            # Add the red horizontal line at the high of the most recent green candle's body
+                            lines.append(mpf.make_addplot([last_green_candle_high]*len(candles), color='red', linestyle='--'))
+                            horizontal_lines.append( (last_green_candle_high, 'resistance') )  # Store the resistance line
+                            st.write(f"Red line drawn at {last_green_candle_high} from the green candle on {filtered_data1.iloc[last_green_candle_index]['date'].date()}.")
+                        green_candle_found = False  # Reset the green candle tracking
 
+            # If no red candle breaks the green candle's low, draw the line on the high of the last green candle
+            if green_candle_found and last_green_candle_high:
+                if not is_line_too_close(last_green_candle_high, horizontal_lines, buffer_threshold):
+                    lines.append(mpf.make_addplot([last_green_candle_high]*len(candles), color='red', linestyle='--'))
+                    horizontal_lines.append( (last_green_candle_high, 'resistance') )  # Store the resistance line
+                    st.write(f"Red line drawn at {last_green_candle_high} from the last green candle's high on {filtered_data1.iloc[last_green_candle_index]['date'].date()}.")
+
+        else:
+            st.info(f"The market is ranging from {start_date.date()} to {end_date.date()}. It is better to wait until a clear trend forms.")
+
+        # Calculate mean price and standard deviation
+        mean_price = filtered_data1['close'].mean()
+        std_dev = filtered_data1['close'].std()
+
+        # Calculate zone width
+        zone_width = std_dev * multiplier
+
+        # Prepare zones based on horizontal lines and zone width
+        zones = []
+
+        for line_price, line_type in horizontal_lines:
+            upper_boundary = line_price + (zone_width / 2)
+            lower_boundary = line_price - (zone_width / 2)
+            zones.append((lower_boundary, upper_boundary, line_type))
+
+        # Plot with horizontal lines if they exist
+        if lines:
+            fig, axlist = mpf.plot(
+                candles,
+                type='candle',
+                style='charles',
+                title=f"Candlestick Chart with Support/Resistance Zones from {start_date.date()} to {end_date.date()}",
+                figsize=(10, 6),
+                returnfig=True,
+                addplot=lines  # Add the horizontal lines
+            )
+        else:
+            fig, axlist = mpf.plot(
+                candles,
+                type='candle',
+                style='charles',
+                title=f"Candlestick Chart from {start_date.date()} to {end_date.date()}",
+                figsize=(10, 6),
+                returnfig=True,
+            )
+
+        ax = axlist[0]
+
+        # Plot the zones as shaded areas
+        for lower_boundary, upper_boundary, line_type in zones:
+            if line_type == 'support':
+                ax.axhspan(lower_boundary, upper_boundary, color='lightgreen', alpha=0.3)
             else:
-                st.info(f"The market is ranging from {start_date.date()} to {end_date.date()}. It is better to wait until a clear trend forms.")
-
-            # Plot with horizontal lines if they exist
-            if lines:
-                fig, axlist = mpf.plot(
-                    candles,
-                    type='candle',
-                    style='charles',
-                    title=f"Candlestick Chart with Support/Resistance Lines from {start_date.date()} to {end_date.date()}",
-                    figsize=(10, 6),
-                    returnfig=True,
-                    addplot=lines  # Add the horizontal lines
-                )
-            else:
-                fig, axlist = mpf.plot(
-                    candles,
-                    type='candle',
-                    style='charles',
-                    title=f"Candlestick Chart from {start_date.date()} to {end_date.date()}",
-                    figsize=(10, 6),
-                    returnfig=True,
-                )
-
-            # Display the plot in Streamlit
-            st.pyplot(fig)
-
-            # Fourth Plot: Candlestick Chart with Trendlines and Support/Resistance Levels
-        st.header("Combined Trendlines and Support/Resistance Levels")
-        st.write(
-            "This chart combines the trendlines and the support/resistance levels to provide a comprehensive view of the market.")
-
-        # Ensure 'filtered_data1' is sorted and contains necessary columns
-        filtered_data1 = filtered_data1.sort_values('date')
-        candles = filtered_data1[['date', 'open', 'high', 'low', 'close']].set_index('date')
-        candles = candles.astype(float)
-
-        # Fit Support and Resistance trendlines
-        support_coefs, resist_coefs = fit_trendlines(candles['high'], candles['low'], candles['close'])
-        support_slope, support_intercept = support_coefs
-        resist_slope, resist_intercept = resist_coefs
-
-        # Calculate the regression line
-        x_vals = np.arange(len(candles))
-        slope, intercept = np.polyfit(x_vals, candles['close'], 1)
-        regression_line = slope * x_vals + intercept
-
-        # Prepare trendlines as pandas Series
-        support_line = support_slope * x_vals + support_intercept
-        resist_line = resist_slope * x_vals + resist_intercept
-
-        support_line_series = pd.Series(support_line, index=candles.index)
-        resist_line_series = pd.Series(resist_line, index=candles.index)
-        regression_line_series = pd.Series(regression_line, index=candles.index)
-
-        # Create addplots for trendlines (use 'width' instead of 'linewidth')
-        ap0 = mpf.make_addplot(support_line_series, color='green', width=1.5)
-        ap1 = mpf.make_addplot(resist_line_series, color='red', width=1.5)
-        ap2 = mpf.make_addplot(regression_line_series, color='blue', linestyle='--', width=1.5)
-
-        # Combine all addplots (trendlines and horizontal support/resistance lines)
-        all_addplots = [ap0, ap1, ap2] + lines  # 'lines' should be defined from the third plot
-
-        # Plot the combined candlestick chart
-        fig, axlist = mpf.plot(
-            candles,
-            type='candle',
-            style='charles',
-            title=f"Candlestick Chart with Trendlines and Support/Resistance Levels from {start_date.date()} to {end_date.date()}",
-            figsize=(12, 8),
-            returnfig=True,
-            addplot=all_addplots
-        )
+                ax.axhspan(lower_boundary, upper_boundary, color='lightcoral', alpha=0.3)
 
         # Display the plot in Streamlit
         st.pyplot(fig)
+
+        # Fourth Plot: Candlestick Chart with Trendlines and Support/Resistance Levels
+    st.header("Combined Trendlines and Support/Resistance Levels")
+    st.write(
+        "This chart combines the trendlines and the support/resistance zones to provide a comprehensive view of the market.")
+
+    # Ensure 'filtered_data1' is sorted and contains necessary columns
+    filtered_data1 = filtered_data1.sort_values('date')
+    candles = filtered_data1[['date', 'open', 'high', 'low', 'close']].set_index('date')
+    candles = candles.astype(float)
+
+    # Fit Support and Resistance trendlines
+    support_coefs, resist_coefs = fit_trendlines(candles['high'], candles['low'], candles['close'])
+    support_slope, support_intercept = support_coefs
+    resist_slope, resist_intercept = resist_coefs
+
+    # Calculate the regression line manually
+    x_vals = np.arange(len(candles))
+    y_vals = candles['close'].values
+
+    slope, intercept = compute_linear_regression(x_vals, y_vals)
+    if slope is None or intercept is None:
+        st.error("Cannot compute linear regression due to zero denominator.")
+        regression_line = np.full_like(x_vals, y_vals.mean())
+    else:
+        regression_line = slope * x_vals + intercept
+
+    # Prepare trendlines as pandas Series
+    support_line = support_slope * x_vals + support_intercept
+    resist_line = resist_slope * x_vals + resist_intercept
+
+    support_line_series = pd.Series(support_line, index=candles.index)
+    resist_line_series = pd.Series(resist_line, index=candles.index)
+    regression_line_series = pd.Series(regression_line, index=candles.index)
+
+    # Create addplots for trendlines
+    ap0 = mpf.make_addplot(support_line_series, color='green', width=1.5)
+    ap1 = mpf.make_addplot(resist_line_series, color='red', width=1.5)
+    ap2 = mpf.make_addplot(regression_line_series, color='blue', linestyle='--', width=1.5)
+
+    # Combine all addplots (trendlines and horizontal support/resistance lines)
+    all_addplots = [ap0, ap1, ap2] + lines  # 'lines' should be defined from the third plot
+
+    # Plot the combined candlestick chart
+    fig, axlist = mpf.plot(
+        candles,
+        type='candle',
+        style='charles',
+        title=f"Candlestick Chart with Trendlines and Support/Resistance Zones from {start_date.date()} to {end_date.date()}",
+        figsize=(12, 8),
+        returnfig=True,
+        addplot=all_addplots
+    )
+
+    ax = axlist[0]
+
+    # Plot the zones as shaded areas
+    for lower_boundary, upper_boundary, line_type in zones:
+        if line_type == 'support':
+            ax.axhspan(lower_boundary, upper_boundary, color='lightgreen', alpha=0.3)
+        else:
+            ax.axhspan(lower_boundary, upper_boundary, color='lightcoral', alpha=0.3)
+
+    # Display the plot in Streamlit
+    st.pyplot(fig)
