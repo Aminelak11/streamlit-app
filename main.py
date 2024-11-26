@@ -649,3 +649,13 @@ else:
 
     # Display the plot in Streamlit
     st.pyplot(fig)
+    # Display the trend message
+    if slope > 1:
+        st.success(
+            f"The market is up trending (Bullish) from {start_date.date()} to {end_date.date()}. Prioritize buying at this moment.")
+    elif slope < -1:
+        st.error(
+            f"The market is down trending from {start_date.date()} to {end_date.date()}. Prioritize selling at this moment.")
+    else:
+        st.info(
+            f"The market is ranging from {start_date.date()} to {end_date.date()}. Better to wait for a trend creation.")
