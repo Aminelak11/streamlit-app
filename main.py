@@ -98,7 +98,7 @@ def fit_trendlines(high: pd.Series, low: pd.Series, close: pd.Series):
 
 # Streamlit Title
 st.title("Trading Strategy Optimization Using Technical Analysis for the GOLD Market")
-
+st.write("This tool provides a comprehensive analysis of the GOLD market using linear regression, trendlines, and candlestick pattern analysis. It identifies market trends, support/resistance levels, and potential trading opportunities.")
 # Read data1.csv
 data1 = pd.read_csv('data1.csv')
 data1['date'] = pd.to_datetime(data1['date'], errors='coerce')
@@ -141,6 +141,7 @@ selected_date_in_data1 = get_previous_available_date(selected_date, dates_in_dat
 
 # Analysis on data1.csv
 st.header("Market trend Identification")
+st.write("This tool provides a comprehensive analysis of the GOLD market using linear regression, trendlines, and candlestick pattern analysis. It identifies market trends, support/resistance levels, and potential trading opportunities.")
 if selected_date_in_data1 is None:
     st.warning(f"No available date before or on {selected_date.date()} in data1.csv")
 else:
@@ -218,6 +219,8 @@ else:
 
 # Trendline Analysis (data1.csv) with Linear Regression
 st.header("Trendline identification")
+st.write("This tool provides a comprehensive analysis of the GOLD market using linear regression, trendlines, and candlestick pattern analysis. It identifies market trends, support/resistance levels, and potential trading opportunities.")
+
 lookback_days = st.number_input(
     "Enter the number of days to include before the chosen date (for Trendline Analysis)",
     min_value=1,
@@ -258,15 +261,23 @@ else:
         else:
             # Fit Support and Resistance trendlines
             support_coefs, resist_coefs = fit_trendlines(candles['high'], candles['low'], candles['close'])
-            support_line = support_coefs[0] * np.arange(len(candles)) + support_coefs[1]
-            resist_line = resist_coefs[0] * np.arange(len(candles)) + resist_coefs[1]
+            support_slope, support_intercept = support_coefs
+            resist_slope, resist_intercept = resist_coefs
 
-            # Calculate the median Line
+            # Calculate the regression line
             x_vals = np.arange(len(candles))
             slope, intercept = np.polyfit(x_vals, candles['close'], 1)
             regression_line = slope * x_vals + intercept
 
+            # Display the calculated trendline equations
+            st.write("### Calculated Trendline Equations:")
+            st.latex(fr"y_\text{{support}} = {support_slope:.2f}x + {support_intercept:.2f}")
+            st.latex(fr"y_\text{{resistance}} = {resist_slope:.2f}x + {resist_intercept:.2f}")
+
             # Prepare trendlines for plotting
+            support_line = support_slope * np.arange(len(candles)) + support_intercept
+            resist_line = resist_slope * np.arange(len(candles)) + resist_intercept
+
             alines = [
                 [(candles.index[i], support_line[i]) for i in range(len(candles))],
                 [(candles.index[i], resist_line[i]) for i in range(len(candles))],
@@ -288,10 +299,9 @@ else:
             col1, col2, col3 = st.columns([0.5, 4, 0.5])  # Center the graph in the middle column
             with col2:
                 st.pyplot(fig)
-
 # Streamlit Title
 st.title("Support and Resistance Levels")
-
+st.write("This tool provides a comprehensive analysis of the GOLD market using linear regression, trendlines, and candlestick pattern analysis. It identifies market trends, support/resistance levels, and potential trading opportunities.")
 # Since we have already read data1.csv and initialized session state, we don't need to do it again.
 
 # User input for minimum distance between two support lines
@@ -515,3 +525,53 @@ else:
 
             # Display the plot in Streamlit
             st.pyplot(fig)
+
+            # Fourth Plot: Candlestick Chart with Trendlines and Support/Resistance Levels
+        st.header("Combined Trendlines and Support/Resistance Levels")
+        st.write(
+            "This chart combines the trendlines and the support/resistance levels to provide a comprehensive view of the market.")
+
+        # Ensure 'filtered_data1' is sorted and contains necessary columns
+        filtered_data1 = filtered_data1.sort_values('date')
+        candles = filtered_data1[['date', 'open', 'high', 'low', 'close']].set_index('date')
+        candles = candles.astype(float)
+
+        # Fit Support and Resistance trendlines
+        support_coefs, resist_coefs = fit_trendlines(candles['high'], candles['low'], candles['close'])
+        support_slope, support_intercept = support_coefs
+        resist_slope, resist_intercept = resist_coefs
+
+        # Calculate the regression line
+        x_vals = np.arange(len(candles))
+        slope, intercept = np.polyfit(x_vals, candles['close'], 1)
+        regression_line = slope * x_vals + intercept
+
+        # Prepare trendlines as pandas Series
+        support_line = support_slope * x_vals + support_intercept
+        resist_line = resist_slope * x_vals + resist_intercept
+
+        support_line_series = pd.Series(support_line, index=candles.index)
+        resist_line_series = pd.Series(resist_line, index=candles.index)
+        regression_line_series = pd.Series(regression_line, index=candles.index)
+
+        # Create addplots for trendlines (use 'width' instead of 'linewidth')
+        ap0 = mpf.make_addplot(support_line_series, color='green', width=1.5)
+        ap1 = mpf.make_addplot(resist_line_series, color='red', width=1.5)
+        ap2 = mpf.make_addplot(regression_line_series, color='blue', linestyle='--', width=1.5)
+
+        # Combine all addplots (trendlines and horizontal support/resistance lines)
+        all_addplots = [ap0, ap1, ap2] + lines  # 'lines' should be defined from the third plot
+
+        # Plot the combined candlestick chart
+        fig, axlist = mpf.plot(
+            candles,
+            type='candle',
+            style='charles',
+            title=f"Candlestick Chart with Trendlines and Support/Resistance Levels from {start_date.date()} to {end_date.date()}",
+            figsize=(12, 8),
+            returnfig=True,
+            addplot=all_addplots
+        )
+
+        # Display the plot in Streamlit
+        st.pyplot(fig)
