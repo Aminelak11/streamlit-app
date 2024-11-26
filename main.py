@@ -121,7 +121,7 @@ def fit_trendlines(high: pd.Series, low: pd.Series, close: pd.Series):
 
 # Streamlit Title
 st.title("Trading Strategy Optimization Using Technical Analysis for the GOLD Market")
-st.write("This tool provides a comprehensive analysis of the GOLD market using linear regression, trendlines, and candlestick pattern analysis. It identifies market trends, support/resistance levels, and potential trading opportunities.")
+st.write("This tool provides automated trading analysis for gold, leveraging three core algorithms to empower traders with actionable insights. It identifies the market trend, plots precise trendlines, and highlights critical key levels. With this analysis, traders can determine optimal positions (buy or sell) and pinpoint potential entry points at key levels, enabling informed and strategic decision-making")
 
 # Read data1.csv
 data1 = pd.read_csv('data1.csv')
