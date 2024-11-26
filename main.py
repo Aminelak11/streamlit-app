@@ -126,7 +126,7 @@ st.write("This tool provides a comprehensive analysis of the GOLD market using l
 # Read data1.csv
 data1 = pd.read_csv('data1.csv')
 data1['date'] = pd.to_datetime(data1['date'], errors='coerce')
-data1 = data1.dropna(subset=['date'])  # Remove rows with invalid dates
+data1 = data1.dropna(subset=['date'])
 
 # Ensure numerical data types for high, low, close columns
 data1[['open', 'high', 'low', 'close']] = data1[['open', 'high', 'low', 'close']].astype(float)
@@ -301,7 +301,6 @@ else:
 
             # Display the calculated trendline equations
             st.write("### Calculated Trendline Equations:")
-            st.latex(fr"y_\text{{regression}} = {slope:.2f}x + {intercept:.2f}")
             st.latex(fr"y_\text{{support}} = {support_slope:.2f}x + {support_intercept:.2f}")
             st.latex(fr"y_\text{{resistance}} = {resist_slope:.2f}x + {resist_intercept:.2f}")
 
@@ -338,7 +337,7 @@ st.write("This tool calculates and plots support and resistance zones using stan
 min_distance_between_supports = st.number_input(
     "Enter the minimum distance between two support/resistance lines (e.g., 2% of price range):",
     min_value=0.01,  # minimum value is 0.01 to avoid too small numbers
-    value=0.02,  # default value is 2%
+    value=0.10,  # default value is 2%
     key="min_distance_supports"
 )
 
@@ -346,7 +345,7 @@ min_distance_between_supports = st.number_input(
 multiplier = st.number_input(
     'Enter the multiplier for standard deviation (e.g., 1 or 2):',
     min_value=0.1,
-    value=1.0,
+    value=0.25,
     key='std_multiplier'
 )
 
@@ -370,7 +369,7 @@ else:
         "Enter the number of days to include before the chosen date (for Candlestick Chart)",
         min_value=1,
         max_value=365,
-        value=31,
+        value=61,
         key="lookback_days_candlestick"
     )
     start_date = selected_date_data1 - pd.Timedelta(days=lookback_days_candlestick - 1)
@@ -537,6 +536,10 @@ else:
         # Calculate mean price and standard deviation
         mean_price = filtered_data1['close'].mean()
         std_dev = filtered_data1['close'].std()
+
+        # Display mean price and standard deviation
+        st.write(f"Mean Price: {mean_price:.2f}")
+        st.write(f"Standard Deviation: {std_dev:.2f}")
 
         # Calculate zone width
         zone_width = std_dev * multiplier
