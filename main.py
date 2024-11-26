@@ -165,7 +165,7 @@ selected_date_in_data1 = get_previous_available_date(selected_date, dates_in_dat
 
 # Analysis on data1.csv
 st.header("Market Trend Identification")
-st.write("This tool provides a comprehensive analysis of the GOLD market using linear regression, trendlines, and candlestick pattern analysis. It identifies market trends, support/resistance levels, and potential trading opportunities.")
+st.write("The first algorithm identifies the market's current trend, which is a crucial starting point for any analysis. By understanding the trend, you can determine whether to focus on buy trades or sell trades, setting a clear direction for your strategy")
 if selected_date_in_data1 is None:
     st.warning(f"No available date before or on {selected_date.date()} in data1.csv")
 else:
@@ -243,7 +243,7 @@ else:
 
 # Trendline Analysis (data1.csv) with Linear Regression
 st.header("Trendline Identification")
-st.write("This tool provides a comprehensive analysis of the GOLD market using linear regression, trendlines, and candlestick pattern analysis. It identifies market trends, support/resistance levels, and potential trading opportunities.")
+st.write("The second algorithm helps you identify potential trend continuations and reversals by accurately plotting trendlines based on market highs and lows. This insight allows you to anticipate market movements and adjust your strategy accordingly.")
 
 lookback_days = st.number_input(
     "Enter the number of days to include before the chosen date (for Trendline Analysis)",
@@ -331,7 +331,7 @@ else:
                 st.pyplot(fig)
 # Streamlit Title
 st.title("Support and Resistance Levels")
-st.write("This tool calculates and plots support and resistance zones using standard deviation to help guide price movements more clearly.")
+st.write("The third and final algorithm draws potential buy or sell levels by mapping support and resistance zones leveraging the trend identified by the first algorithm. Using market volatility to refine these zones, offering a more accurate and actionable range for strategic decision-making.")
 
 # User input for minimum distance between two support lines
 min_distance_between_supports = st.number_input(
