@@ -279,7 +279,7 @@ else:
         if len(candles) < 2:
             st.warning(f"Not enough data to compute trendlines from {start_date1.date()} to {end_date1.date()}.")
         else:
-            # Fit Support and Resistance trendlines
+            
             support_coefs, resist_coefs = fit_trendlines(candles['high'], candles['low'], candles['close'])
             support_slope, support_intercept = support_coefs
             resist_slope, resist_intercept = resist_coefs
