@@ -121,7 +121,7 @@ def fit_trendlines(high: pd.Series, low: pd.Series, close: pd.Series):
 
 # Streamlit Title
 st.title("Trading Strategy Optimization Using Technical Analysis for the GOLD Market")
-st.write("This tool provides automated trading analysis for gold, leveraging three core algorithms to empower traders with actionable insights. It identifies the market trend, plots precise trendlines, and highlights critical key levels. With this analysis, traders can determine optimal positions (buy or sell) and pinpoint potential entry points at key levels, enabling informed and strategic decision-making")
+st.write("This tool provides automated trading analysis for gold specifically for day traders, leveraging three core algorithms to empower traders with actionable insights. It identifies the market trend, plots precise trendlines, and highlights critical key levels. With this analysis, traders can determine optimal positions (buy or sell) and pinpoint potential entry points at key levels, enabling informed and strategic decision-making")
 
 # Read data1.csv
 data1 = pd.read_csv('data1.csv')
@@ -582,9 +582,9 @@ else:
         st.pyplot(fig)
 
         # Fourth Plot: Candlestick Chart with Trendlines and Support/Resistance Levels
-    st.header("Combined Trendlines and Support/Resistance Levels")
+    st.header("Visual Summary of the Trading strategy")
     st.write(
-        "This chart combines the trendlines and the support/resistance zones to provide a comprehensive view of the market.")
+        "This final algorithm provides a comprehensive conclusion by synthesizing the results of the first three algorithms based on the specific date range selected by the user. It consolidates all key insights into a unified visualization, helping traders make informed decisions by presenting a clear summary of market trends and actionable insights tailored to their chosen timeframe.")
 
     # Ensure 'filtered_data1' is sorted and contains necessary columns
     filtered_data1 = filtered_data1.sort_values('date')
@@ -648,10 +648,10 @@ else:
     # Display the trend message
     if slope > 1:
         st.success(
-            f"The market is up trending (Bullish) from {start_date.date()} to {end_date.date()}. Prioritize buying at this moment.")
+            f"The market is up trending (Bullish) from {start_date.date()} to {end_date.date()} use those key levels to find your best entry-level making sure to follow the trend given by the Identification algorithm .")
     elif slope < -1:
         st.error(
-            f"The market is down trending from {start_date.date()} to {end_date.date()}. Prioritize selling at this moment.")
+            f"The market is down trending from {start_date.date()} to {end_date.date()} use those key levels to find your best entry-level making sure to follow the trend given by the Identification algorithm.")
     else:
         st.info(
-            f"The market is ranging from {start_date.date()} to {end_date.date()}. Better to wait for a trend creation.")
+            f"The market is ranging from {start_date.date()} to {end_date.date()} better to one for a trend creation.")
