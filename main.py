@@ -164,7 +164,7 @@ dates_in_data1 = data1['date']
 selected_date_in_data1 = get_previous_available_date(selected_date, dates_in_data1)
 
 # Analysis on data1.csv
-st.header("Market Trend Identification")
+st.header("1)Market Trend Identification")
 st.write("The first algorithm identifies the market's current trend, which is a crucial starting point for any analysis. By understanding the trend, you can determine whether to focus on buy trades or sell trades, setting a clear direction for your strategy")
 if selected_date_in_data1 is None:
     st.warning(f"No available date before or on {selected_date.date()} in data1.csv")
@@ -238,7 +238,7 @@ else:
                     f"The market is ranging from {start_date.date()} to {end_date.date()}. Better to wait for a trend creation.")
 
 # Trendline Analysis (data1.csv) with Linear Regression
-st.header("Trendline Identification")
+st.header("2)Trendline Identification")
 st.write("The second algorithm helps you identify potential trend continuations and reversals by accurately plotting trendlines based on market highs and lows. This insight allows you to anticipate market movements and adjust your strategy accordingly.")
 
 lookback_days = st.number_input(
@@ -326,7 +326,7 @@ else:
             with col2:
                 st.pyplot(fig)
 # Streamlit Title
-st.title("Support and Resistance Levels")
+st.title("3)Support and Resistance Levels")
 st.write("The third and final algorithm draws potential buy or sell levels by mapping support and resistance zones leveraging the trend identified by the first algorithm. Using market volatility to refine these zones, offering a more accurate and actionable range for strategic decision-making.")
 
 # User input for minimum distance between two support lines
@@ -582,7 +582,7 @@ else:
         st.pyplot(fig)
 
         # Fourth Plot: Candlestick Chart with Trendlines and Support/Resistance Levels
-    st.header("Visual Summary of the Trading strategy")
+    st.header("4)Visual Summary of the Trading strategy")
     st.write(
         "This final algorithm provides a comprehensive conclusion by synthesizing the results of the first three algorithms based on the specific date range selected by the user. It consolidates all key insights into a unified visualization, helping traders make informed decisions by presenting a clear summary of market trends and actionable insights tailored to their chosen timeframe.")
 
