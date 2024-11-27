@@ -421,7 +421,7 @@ else:
 
         # If there is an uptrend, proceed to identify the special green line case
         if slope > 1:
-            st.success(f"The market is up trending (Bullish) from {start_date.date()} to {end_date.date()}.")
+           
 
             # Variables to track state
             red_candle_found = False
@@ -474,8 +474,7 @@ else:
                     st.write(f"Green line drawn at {last_red_candle_low} from the last red candle's low on {filtered_data1.iloc[last_red_candle_index]['date'].date()}.")
 
         elif slope < -1:
-            st.error(f"The market is down trending (Bearish) from {start_date.date()} to {end_date.date()}.")
-
+           
             # Variables to track state
             green_candle_found = False
             green_candle_high = None
@@ -527,7 +526,7 @@ else:
                     st.write(f"Red line drawn at {last_green_candle_high} from the last green candle's high on {filtered_data1.iloc[last_green_candle_index]['date'].date()}.")
 
         else:
-            st.info(f"The market is ranging from {start_date.date()} to {end_date.date()}. It is better to wait until a clear trend forms.")
+           
 
         # Calculate mean price and standard deviation
         mean_price = filtered_data1['close'].mean()
