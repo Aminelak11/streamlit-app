@@ -196,7 +196,6 @@ else:
 
         x = filtered_data1['day_number'].values
 
-        # Calculate sums for linear regression
         n = len(x)
         sum_x = np.sum(x)
         sum_y = np.sum(y)
@@ -205,25 +204,22 @@ else:
         denominator = n * sum_x_squared - sum_x ** 2
 
         if denominator == 0:
-            st.error("Cannot compute linear regression due to zero denominator.")
+            st.error("Cannot compute Least square method due to zero denominator.")
         else:
-            # Calculate slope and intercept
             slope = (n * sum_xy - sum_x * sum_y) / denominator
             intercept = (sum_y * sum_x_squared - sum_x * sum_xy) / denominator
 
-            # Display the equation of the line
-            st.write(f"The equation of the line is: y = {slope:.2f}x + {intercept:.2f}")
+            st.write(f"The equation of the line using Least square method is: y = {slope:.2f}x + {intercept:.2f}")
 
-            # Generate predictions
+        
             predicted_prices = slope * x + intercept
 
-            # Plot the results using Matplotlib
             fig, ax = plt.subplots(figsize=(10, 6))
             ax.scatter(filtered_data1['date'], y, color='blue', label='Original Data')
             ax.plot(filtered_data1['date'], predicted_prices, color='red', label=f'Linear fit: y = {slope:.2f}x + {intercept:.2f}')
             ax.set_xlabel('Date')
             ax.set_ylabel('Price')
-            ax.set_title(f'Linear Regression on {price_option} from {start_date.date()} to {end_date.date()}')
+            ax.set_title(f'Trend identfication on {price_option} from {start_date.date()} to {end_date.date()}')
             ax.legend()
             ax.grid(True)
 
