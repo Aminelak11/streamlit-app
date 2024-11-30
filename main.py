@@ -654,4 +654,4 @@ else:
             f"The market is down trending from {start_date.date()} to {end_date.date()} use those key levels to find your best entry-level making sure to follow the trend given by the Identification algorithm.")
     else:
         st.info(
-            f"The market is ranging from {start_date.date()} to {end_date.date()} better to one for a trend creation.")
+            f"The market is ranging from {start_date.date()} to {end_date.date()} better to wait for a trend creation.")
